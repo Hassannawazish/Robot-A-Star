@@ -2,15 +2,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
- # Initialisation of robot parameters
+
+# Initialisation of robot parameters
 robot_speed = 5  # m/s
 robot_position = [0, 0, 0]  # Initial position of the robot (x, y, z)
 robot_size = [2, 1, 1]  # Width, length and height of the robot (2m x 1m x 1m)
-# Definition of sensor angles (8 sensors around the robot in a horizontal plane and 4 in the vertical)
+
+# Definition of sensor angles (8 sensors around the robot in a horizontal plane and 2 in the vertical)
 sensor_angles_xy = np.linspace(0, 2*np.pi, 8, endpoint=False)
 sensor_angles_z = [-np.pi/4, np.pi/4]  # Sensors tilted upwards and downwards
-# Define obstacles in the scene (x, y, z)
-obstacles = [(5, 0, 0), (3, 3, 1.5)]  # Obstacles with 3D positions
+
+# Define obstacles in the scene (x, y, z) - you can modify this list
+# Example: Static obstacle positions
+# obstacles = [(5, 0, 0), (3, 3, 1.5), (7, -2, 0.5), (6, 5, 2)]  # Multiple obstacles
+
+# Example: Randomly generated obstacles
+num_obstacles = 10
+obstacles = [(np.random.uniform(-10, 10), np.random.uniform(-10, 10), np.random.uniform(-1, 2)) for _ in range(num_obstacles)]
+
 # Simulation of proximity sensor readings
 def read_sensors():
     distances = []
@@ -32,7 +41,8 @@ def read_sensors():
         distances.append(distance)
     
     return distances
- # 3D robot movement logic
+
+# 3D robot movement logic
 def move_robot():
     global robot_position
     sensors = read_sensors()
@@ -48,8 +58,8 @@ def move_robot():
     else:
         print("No obstacles detected, the robot is moving forward.")
         robot_position[0] += robot_speed * 0.1  # The robot moves forward on x
- # 3D visual simulation with matplotlib
 
+# 3D visual simulation with matplotlib
 def visual_simulation():
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -67,6 +77,7 @@ def visual_simulation():
                              [robot_position[0] + robot_size[0]/2, robot_position[1] - robot_size[1]/2, robot_position[2] + robot_size[2]/2],
                              [robot_position[0] + robot_size[0]/2, robot_position[1] + robot_size[1]/2, robot_position[2] + robot_size[2]/2],
                              [robot_position[0] - robot_size[0]/2, robot_position[1] + robot_size[1]/2, robot_position[2] + robot_size[2]/2]])
+    
     verts = [[robot_points[j] for j in [0, 1, 2, 3]],
              [robot_points[j] for j in [4, 5, 6, 7]], 
              [robot_points[j] for j in [0, 1, 5, 4]], 
@@ -82,24 +93,27 @@ def visual_simulation():
         y_sensor = robot_position[1] + np.sin(angle) * 2
         z_sensor = robot_position[2]
         ax.plot([robot_position[0], x_sensor], [robot_position[1], y_sensor], [robot_position[2], z_sensor], color='green')
+    
     for angle_z in sensor_angles_z:
         x_sensor = robot_position[0]
         y_sensor = robot_position[1]
         z_sensor = robot_position[2] + np.sin(angle_z) * 2
         ax.plot([robot_position[0], x_sensor], [robot_position[1], y_sensor], [robot_position[2], z_sensor], color='orange')
+    
     # Draw the obstacles (red spheres)
     for obstacle in obstacles:
         ax.scatter(obstacle[0], obstacle[1], obstacle[2], color='red', s=200)
     
     plt.pause(0.1)
     plt.draw()
- # Main simulation loop
+
+# Main simulation loop
 def simulation_loop():
     for _ in range(20):  # Simulate 20 time steps
         move_robot()
         plt.clf()  # Clear the previous figure
         visual_simulation()  # Draw the new scene
         time.sleep(0.5)  # Delay for visual simulation
- # Start the 
- 
+
+# Start the simulation
 simulation_loop()
