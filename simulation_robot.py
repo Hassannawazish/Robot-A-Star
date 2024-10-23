@@ -12,11 +12,7 @@ robot_size = [2, 1, 1]  # Width, length and height of the robot (2m x 1m x 1m)
 sensor_angles_xy = np.linspace(0, 2*np.pi, 8, endpoint=False)
 sensor_angles_z = [-np.pi/4, np.pi/4]  # Sensors tilted upwards and downwards
 
-# Define obstacles in the scene (x, y, z) - you can modify this list
-# Example: Static obstacle positions
-# obstacles = [(5, 0, 0), (3, 3, 1.5), (7, -2, 0.5), (6, 5, 2)]  # Multiple obstacles
-
-# Example: Randomly generated obstacles
+# Define obstacles in the scene (x, y, z)
 num_obstacles = 10
 obstacles = [(np.random.uniform(-10, 10), np.random.uniform(-10, 10), np.random.uniform(-1, 2)) for _ in range(num_obstacles)]
 
@@ -42,22 +38,25 @@ def read_sensors():
     
     return distances
 
-# 3D robot movement logic
+# 3D robot movement logic with gradual speed reduction
 def move_robot():
     global robot_position
     sensors = read_sensors()
     print("Proximity sensors: ", sensors)
     
-    # Check obstacle distances
-    if min(sensors[0:4]) < 1:  # Obstacle less than 1 metre in front
-        print("Obstacle detected in front! The robot is backing up slightly.")
-        robot_position[0] -= robot_speed * 0.1  # The robot backs up slightly
-    elif min(sensors[8:10]) < 1:  # Obstacle above or below
-        print("Obstacle detected above or below! The robot is not climbing.")
-        robot_position[2] -= robot_speed * 0.1  # The robot backs up on the z-axis
+    front_distance = min(sensors[0:4])  # Closest obstacle in front
+    z_distance = min(sensors[8:10])  # Closest obstacle above/below
+
+    # Reduce speed based on proximity
+    if front_distance < 3:
+        print("Reducing speed based on proximity to front obstacle.")
+        robot_position[0] += robot_speed * (front_distance / 3) * 0.1  # Scales speed based on distance
+    elif z_distance < 1:
+        print("Reducing speed based on proximity to obstacle above or below.")
+        robot_position[2] += robot_speed * (z_distance / 1) * 0.1  # Scales speed based on distance
     else:
-        print("No obstacles detected, the robot is moving forward.")
-        robot_position[0] += robot_speed * 0.1  # The robot moves forward on x
+        print("No obstacles detected, the robot is moving at full speed.")
+        robot_position[0] += robot_speed * 0.1  # Moves at full speed
 
 # 3D visual simulation with matplotlib
 def visual_simulation():
@@ -109,7 +108,7 @@ def visual_simulation():
 
 # Main simulation loop
 def simulation_loop():
-    for _ in range(20):  # Simulate 20 time steps
+    for _ in range(50):  # Simulate 20 time steps
         move_robot()
         plt.clf()  # Clear the previous figure
         visual_simulation()  # Draw the new scene
