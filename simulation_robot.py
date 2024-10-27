@@ -1,6 +1,7 @@
 import heapq
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 
 # Define the grid dimensions
@@ -9,7 +10,7 @@ grid_size = 10
 # Create a 10x10 grid with obstacles
 grid = np.zeros((grid_size, grid_size), dtype=int)
 
-# Define new start (S) and goal (G) positions
+# Define start (S) and goal (G) positions
 start = (8, 1)  # Near bottom-left corner
 goal = (1, 8)   # Near top-right corner
 
@@ -68,11 +69,63 @@ def astar(grid, start, goal):
 # Run A* and get the path and explored nodes
 path, explored = astar(grid, start, goal)
 
-# 3D Visualization function
-def visualize_3d_grid(grid, path, explored, start, goal):
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(111, projection='3d')
+# Create the figure and subplots
+fig = plt.figure(figsize=(18, 6))
+ax1 = fig.add_subplot(131)  # 2D Grid Animation
+ax2 = fig.add_subplot(132)  # 2D Path Graph
+ax3 = fig.add_subplot(133, projection='3d')  # 3D Grid Visualization
+
+# 2D Animated Moving Object on Grid
+def animate_2d_grid(ax, grid, path, start, goal):
+    # Draw grid with obstacles, start, goal, and explored nodes
+    for x in range(grid_size):
+        for y in range(grid_size):
+            if grid[x, y] == 1:
+                ax.add_patch(plt.Rectangle((y, grid_size - x - 1), 1, 1, color='black'))  # Obstacles
+            elif (x, y) == start:
+                ax.add_patch(plt.Rectangle((y, grid_size - x - 1), 1, 1, color='green'))  # Start point
+            elif (x, y) == goal:
+                ax.add_patch(plt.Rectangle((y, grid_size - x - 1), 1, 1, color='red'))    # Goal point
+
+    # Grid and axis settings
+    ax.set_xticks(np.arange(0, grid_size, 1))
+    ax.set_yticks(np.arange(0, grid_size, 1))
+    ax.grid(color='gray')
+    ax.set_xlim(0, grid_size)
+    ax.set_ylim(0, grid_size)
+    ax.invert_yaxis()
+    ax.set_title("2D Moving Object Animation")
+
+    # Initialize the moving object as a red dot at the start point
+    moving_obj, = ax.plot([start[1] + 0.5], [grid_size - start[0] - 1 + 0.5], 'ro', markersize=10)
+
+    # Animation function to update the object's position
+    def update(i):
+        if i < len(path):
+            x, y = path[i]
+            moving_obj.set_data([y + 0.5], [grid_size - x - 1 + 0.5])  # Update position to center of cell
+
+    # Create animation
+    ani = FuncAnimation(fig, update, frames=len(path), interval=500, repeat=False)
+    return ani
+
+# 2D Path Graph
+def plot_path_graph(ax, path):
+    x_points = [p[1] for p in path]
+    y_points = [grid_size - p[0] - 1 for p in path]
     
+    ax.plot(x_points, y_points, marker='o', markersize=5, color='yellow', label="Path")
+    ax.plot(x_points[0], y_points[0], 'go', markersize=10, label="Start")
+    ax.plot(x_points[-1], y_points[-1], 'ro', markersize=10, label="Goal")
+
+    ax.set_title("2D Path Graph of A* Algorithm")
+    ax.set_xlabel("X-axis")
+    ax.set_ylabel("Y-axis")
+    ax.legend()
+    ax.grid(True)
+
+# 3D Path Visualization
+def plot_3d_grid(ax, grid, path, start, goal):
     # Set axis limits
     ax.set_xlim(0, grid_size)
     ax.set_ylim(0, grid_size)
@@ -83,11 +136,6 @@ def visualize_3d_grid(grid, path, explored, start, goal):
         for y in range(grid_size):
             if grid[x, y] == 1:
                 ax.bar3d(y, grid_size - x - 1, 0, 1, 1, 1, color='black', alpha=0.8)  # Obstacles
-
-    # Draw explored nodes
-    for (x, y) in explored:
-        if (x, y) != start and (x, y) != goal:
-            ax.bar3d(y, grid_size - x - 1, 1, 1, 1, 1, color='lightblue', alpha=0.5)  # Explored nodes
 
     # Draw the path
     if path:
@@ -105,7 +153,9 @@ def visualize_3d_grid(grid, path, explored, start, goal):
     ax.set_zlabel("Layers")
     ax.set_title("3D Simulation of A* Pathfinding")
 
-    plt.show()
+# Call the functions to populate each subplot
+ani = animate_2d_grid(ax1, grid, path, start, goal)
+plot_path_graph(ax2, path)
+plot_3d_grid(ax3, grid, path, start, goal)
 
-# Visualize the 3D grid with path, explored nodes, and obstacles
-visualize_3d_grid(grid, path, explored, start, goal)
+plt.show()
