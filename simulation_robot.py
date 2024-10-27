@@ -1,6 +1,7 @@
 import heapq
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 # Define the grid dimensions
 grid_size = 10
@@ -67,36 +68,44 @@ def astar(grid, start, goal):
 # Run A* and get the path and explored nodes
 path, explored = astar(grid, start, goal)
 
-# Visualization function
-def visualize_grid(grid, path, explored, start, goal):
-    fig, ax = plt.subplots(figsize=(8, 8))
+# 3D Visualization function
+def visualize_3d_grid(grid, path, explored, start, goal):
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection='3d')
     
-    # Draw grid with obstacles, start, goal, path, and explored nodes
+    # Set axis limits
+    ax.set_xlim(0, grid_size)
+    ax.set_ylim(0, grid_size)
+    ax.set_zlim(0, 3)  # 3 layers: 0 for grid, 1 for explored, 2 for path
+
+    # Draw obstacles
     for x in range(grid_size):
         for y in range(grid_size):
             if grid[x, y] == 1:
-                ax.add_patch(plt.Rectangle((y, grid_size - x - 1), 1, 1, color='black'))  # Obstacles
-            elif (x, y) == start:
-                ax.add_patch(plt.Rectangle((y, grid_size - x - 1), 1, 1, color='green'))  # Start point
-            elif (x, y) == goal:
-                ax.add_patch(plt.Rectangle((y, grid_size - x - 1), 1, 1, color='red'))    # Goal point
-            elif (x, y) in explored and (x, y) not in path:
-                ax.add_patch(plt.Rectangle((y, grid_size - x - 1), 1, 1, color='lightblue'))  # Explored nodes
+                ax.bar3d(y, grid_size - x - 1, 0, 1, 1, 1, color='black', alpha=0.8)  # Obstacles
 
-    # Draw path
+    # Draw explored nodes
+    for (x, y) in explored:
+        if (x, y) != start and (x, y) != goal:
+            ax.bar3d(y, grid_size - x - 1, 1, 1, 1, 1, color='lightblue', alpha=0.5)  # Explored nodes
+
+    # Draw the path
     if path:
         for (x, y) in path:
             if (x, y) != start and (x, y) != goal:
-                ax.add_patch(plt.Rectangle((y, grid_size - x - 1), 1, 1, color='yellow'))  # Path cells
-    
-    # Grid and axis settings
-    ax.set_xticks(np.arange(0, grid_size, 1))
-    ax.set_yticks(np.arange(0, grid_size, 1))
-    ax.grid(color='gray')
-    ax.set_xlim(0, grid_size)
-    ax.set_ylim(0, grid_size)
-    plt.gca().invert_yaxis()
+                ax.bar3d(y, grid_size - x - 1, 2, 1, 1, 1, color='yellow', alpha=0.7)  # Path cells
+
+    # Draw start and goal
+    ax.bar3d(start[1], grid_size - start[0] - 1, 2, 1, 1, 1, color='green', alpha=1.0)  # Start point
+    ax.bar3d(goal[1], grid_size - goal[0] - 1, 2, 1, 1, 1, color='red', alpha=1.0)    # Goal point
+
+    # Labels and title
+    ax.set_xlabel("X-axis")
+    ax.set_ylabel("Y-axis")
+    ax.set_zlabel("Layers")
+    ax.set_title("3D Simulation of A* Pathfinding")
+
     plt.show()
 
-# Visualize the grid with path, explored nodes, and obstacles
-visualize_grid(grid, path, explored, start, goal)
+# Visualize the 3D grid with path, explored nodes, and obstacles
+visualize_3d_grid(grid, path, explored, start, goal)
